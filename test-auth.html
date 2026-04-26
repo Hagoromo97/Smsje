@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication API</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0f0f0f;
+            color: #fff;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        h1 { color: #8b5cf6; }
+        h2 { color: #a78bfa; margin-top: 0; }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+        }
+        button {
+            background: #8b5cf6;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #7c3aed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { border-left: 3px solid #10b981; }
+        .error { border-left: 3px solid #ef4444; }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication API Tester</h1>
+    <p>Test the user authentication endpoints for your SMS Gateway</p>
+
+    <div class="section">
+        <h2>1. Register New User</h2>
+        <label>Email</label>
+        <input type="email" id="registerEmail" placeholder="user@example.com" value="test@example.com">
+        <label>Password</label>
+        <input type="password" id="registerPassword" placeholder="Minimum 6 characters" value="password123">
+        <label>Name</label>
+        <input type="text" id="registerName" placeholder="John Doe" value="Test User">
+        <button onclick="register()">Register</button>
+        <div id="registerResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Login</h2>
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="user@example.com" value="test@example.com">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" value="password123">
+        <button onclick="login()">Login</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Check Auth Status</h2>
+        <button onclick="checkStatus()">Check Status</button>
+        <div id="statusResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Logout</h2>
+        <button onclick="logout()">Logout</button>
+        <div id="logoutResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function register() {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const name = document.getElementById('registerName').value;
+            const resultDiv = document.getElementById('registerResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = 'SUCCESS:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'ERROR:\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'ERROR:\n' + error.message;
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = 'SUCCESS:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'ERROR:\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'ERROR:\n' + error.message;
+            }
+        }
+
+        async function checkStatus() {
+            const resultDiv = document.getElementById('statusResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/status`, {
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = 'STATUS:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'ERROR:\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'ERROR:\n' + error.message;
+            }
+        }
+
+        async function logout() {
+            const resultDiv = document.getElementById('logoutResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = 'SUCCESS:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'ERROR:\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'ERROR:\n' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

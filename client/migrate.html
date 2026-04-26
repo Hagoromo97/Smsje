@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Database Migration</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 28px;
+        }
+        .info {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .checkmark {
+            font-size: 60px;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Database Migration</h1>
+        
+        <div class="info">
+            <p><strong>Apa yang akan berlaku:</strong></p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Update table <code>users</code> dengan field baru</li>
+                <li>Tambah field <code>email</code> (required, unique)</li>
+                <li>Tambah field <code>password</code> (bcrypt hashed)</li>
+                <li>Tambah field <code>name</code> (required)</li>
+            </ul>
+            <p style="margin-top: 15px;">
+                <strong>⚠️ Migration ini MESTI dijalankan sebelum boleh create account!</strong>
+            </p>
+        </div>
+
+        <button id="migrateBtn" onclick="runMigration()">
+            ▶️ Run Migration Sekarang
+        </button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function runMigration() {
+            const btn = document.getElementById('migrateBtn');
+            const resultDiv = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Running migration...';
+            
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Sedang update database... Tunggu sebentar...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/migrate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <div class="checkmark">✅</div>
+                            <strong>Migration Berjaya!</strong>
+                            <p>Database telah dikemaskini dengan jayanya.</p>
+                            <hr style="margin: 15px 0; border: none; border-top: 1px solid #28a745;">
+                            <p><strong>Anda sekarang boleh:</strong></p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>Pergi ke halaman utama</li>
+                                <li>Create account baru</li>
+                                <li>Login dengan email dan password</li>
+                            </ul>
+                            <button onclick="window.location.href='/'" style="margin-top: 20px;">
+                                🏠 Pergi ke Halaman Utama
+                            </button>
+                        </div>
+                    `;
+                    btn.textContent = '✅ Migration Complete!';
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Migration Gagal</strong>
+                            <p>${data.message || 'Unknown error'}</p>
+                            ${data.error ? `<pre style="margin-top: 10px; font-size: 12px;">${data.error}</pre>` : ''}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Cuba Lagi';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Connection Error</strong>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 10px;">Pastikan server sedang running.</p>
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🔄 Cuba Lagi';
+            }
+        }
+    </script>
+</body>
+</html>
