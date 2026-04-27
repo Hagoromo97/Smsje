@@ -34,15 +34,7 @@ export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [isDark, setIsDark] = useState(true);
-  const { isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
-
-  // Redirect to landing if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      window.location.href = "/";
-    }
-  }, [isAuthenticated, isLoading]);
 
   // Listen for tab switch events
   useEffect(() => {
